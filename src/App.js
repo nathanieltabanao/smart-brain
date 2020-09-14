@@ -86,11 +86,13 @@ class App extends Component {
             method: 'put',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                email: this.state.email,
-                password: this.state.password,
-                name: this.state.name
+                id: this.state.user.id,
             })
         })
+          .then(response => response.json())
+          .then(count => {
+            this.setState(Object.assign(this.state.user, {entries: count}))
+          })
         }
         this.displayFaceBox(this.calculateFaceLocation(response))
       })
@@ -98,7 +100,7 @@ class App extends Component {
   }
 
   loadUser = (data) => {
-    this.setState({data: {
+    this.setState({user: {
       id: data.id,
       name: data.name,
       email: data.email,
@@ -109,7 +111,6 @@ class App extends Component {
 
   render() {
     const {isSignedIn, imageUrl, route, box} = this.state;
-    console.log(route,'route');
     return (
       <div className="App">
         <Particles  className='particles'
