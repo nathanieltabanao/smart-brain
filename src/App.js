@@ -8,9 +8,7 @@ import Rank from './components/Rank/Rank'
 import Particles from 'react-particles-js';
 import FaceRecognition from './components/FaceRecognition/FaceRecognition'
 import './App.css';
-import Clarifai from 'clarifai'
 
-const app = new Clarifai.App({apiKey: '2280267f608c487993f64a14e944c6fd'});
 
 const particleOptions = {
   particles: {
@@ -24,26 +22,26 @@ const particleOptions = {
   }
 }
 
+const initialState = {
+  input: '',
+  imageUrl:'',
+  box: {},
+  route:'signin',
+  isSignedIn: false,
+  user: {
+        id: '',
+        name: '',
+        email: '',
+        entries: 0,
+        joined: '',
+  }
+}
+
 class App extends Component {
   constructor() {
     super();
-    this.state = {
-      input: '',
-      imageUrl:'',
-      box: {},
-      route:'signin',
-      isSignedIn: false,
-      user: {
-            id: '',
-            name: '',
-            email: '',
-            entries: 0,
-            joined: '',
-      }
-    }
+    this.state = initialState
   }
-
-  
 
   calculateFaceLocation = (data) => {
     const clarficaiFace = data.outputs[0].data.regions[0].region_info.bounding_box;
@@ -69,7 +67,7 @@ class App extends Component {
 
   onRouteChange = (route) => {
     if (route === 'signout') {
-      this.setState({isSignedIn:false})
+      this.setState(initialState)
     } else if (route === 'home') {
       this.setState({isSignedIn: true})
     }
@@ -78,8 +76,14 @@ class App extends Component {
 
   onButtonSubmit = () => {
     this.setState({imageUrl:this.state.input});
-    app.models.predict('a403429f2ddf4b49b307e318f00e528b',
-      this.state.input)
+    fetch('http://localhost:3000/imageurl', {
+            method: 'post',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                input: this.state.input,
+              })
+          })
+      .then(response => response.json())
       .then(response => {
         if(response) {
           fetch('http://localhost:3000/image', {
@@ -87,12 +91,14 @@ class App extends Component {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 id: this.state.user.id,
-            })
-        })
-          .then(response => response.json())
+              })
+          })
+          .then(response =>response.json())
           .then(count => {
+            console.log(count, 'count')
             this.setState(Object.assign(this.state.user, {entries: count}))
           })
+          .catch(console.log)
         }
         this.displayFaceBox(this.calculateFaceLocation(response))
       })
